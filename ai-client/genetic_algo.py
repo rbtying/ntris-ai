@@ -4,6 +4,7 @@ import re
 import tempfile
 import os
 import threading
+import sys
 
 chromosome_seed = {
         'BLOCK_EDGES': 0.7277,
@@ -43,7 +44,7 @@ def run_trial(chromosome, seed=random.randint(0, 1024)):
     m = re.search('RESULTS: (\d+)', stdout)
 
     try:
-        print 'trial finished with result ' + m.group(1)
+        # print 'trial finished with result ' + m.group(1)
         return int(m.group(1))
     except:
         return 0
@@ -100,6 +101,8 @@ def run_generation(population):
     for row in sorted(table, key=lambda v: v[1]):
         print row
 
+    sys.stdout.flush()
+
     survivors = list()
     pairs = randompair(table)
     for pair in pairs:
@@ -124,10 +127,14 @@ def run_generation(population):
         # newpopl.append(parentpair[1][0])
         newpopl.append(generate_random_chromosome(parentpair[1], 0.01))
     newpopl = newpopl + children
-    return newpopl
+
+    for row in sorted(table, key=lambda v: v[1], reverse=True):
+        return newpopl, row[1]
 
 if __name__ == '__main__':
     population = [generate_random_chromosome() for i in range(16)]
 
     while True:
-        population = run_generation(population)
+        population, topscore = run_generation(population)
+        if topscore / 4 > 100:
+            break

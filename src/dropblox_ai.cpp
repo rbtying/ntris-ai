@@ -135,6 +135,7 @@ void Block::reset_position() {
 Board::Board() {
   rows = ROWS;
   cols = COLS;
+  rows_cleared = 0;
 }
 
 Board::Board(Object& state) {

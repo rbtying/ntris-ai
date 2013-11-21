@@ -69,13 +69,13 @@ class Command(object):
         thread.start()
 
         thread.join(timeout)
-        # print colorred.format('Terminating process')
+        print colorred.format('Terminating process')
         try:
             process.terminate()
             thread.join(60)
         except Exception:
             pass
-        # print colorgrn.format('commands received: %s' % cmds)
+        print colorgrn.format('commands received: %s' % cmds)
         return cmds
 
 class GameStateLogger(object):
@@ -88,13 +88,11 @@ class GameStateLogger(object):
             os.makedirs(self.log_dir)
 
     def log_game_state(self, game_state):
-        return
         fname = os.path.join(self.log_dir, 'state%s' % (self.turn_num,))
         with open(fname, 'w+') as f:
             f.write(game_state)
 
     def log_ai_move(self, move_list):
-        return
         fname = os.path.join(self.log_dir, 'move%s' % (self.turn_num,))
         with open(fname, 'w+') as f:
             f.write(move_list)
@@ -239,14 +237,14 @@ def run_game(server, game, use_logger=True):
             final_game_state_dict = e.game_state_dict
             break
         moves_made += 1
-        # print 'moves_made:', moves_made, 'score:', game['game']['game_state']['score'],
-        # print 'seconds_remaining:', game['competition_seconds_remaining']
+        print 'moves_made:', moves_made, 'score:', game['game']['game_state']['score'],
+        print 'seconds_remaining:', game['competition_seconds_remaining']
 
     if logger is not None:
         logger.log_game_state(json.dumps(final_game_state_dict))
 
-    # print colorgrn.format("Game over! Your score was: %s" %
-    #                       (final_game_state_dict['score'],))
+    print colorgrn.format("Game over! Your score was: %s" %
+                          (final_game_state_dict['score'],))
     print "RESULTS: %s" % final_game_state_dict['score']
     print "RESULTS_TIME: %s" % moves_made
 

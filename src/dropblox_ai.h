@@ -72,7 +72,7 @@ class Board {
  public:
   int rows;
   int cols;
-  int rows_cleared = 0;
+  int rows_cleared;
   Bitmap bitmap;
   Block* block;
   vector<Block*> preview;
