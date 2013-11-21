@@ -69,13 +69,13 @@ class Command(object):
         thread.start()
 
         thread.join(timeout)
-        print colorred.format('Terminating process')
+        # print colorred.format('Terminating process')
         try:
             process.terminate()
             thread.join(60)
         except Exception:
             pass
-        print colorgrn.format('commands received: %s' % cmds)
+        # print colorgrn.format('commands received: %s' % cmds)
         return cmds
 
 class GameStateLogger(object):
@@ -214,7 +214,7 @@ def run_ai(game_state_dict, seconds_remaining, logger=None):
     ai_arg_two = json.dumps(seconds_remaining)
     if logger is not None:
         logger.log_game_state(ai_arg_one)
-    command = Command(AI_PROCESS_PATH, ai_arg_one, ai_arg_two)
+    command = Command(AI_PROCESS_PATH, ai_arg_one, ai_arg_two, sys.argv[3])
     ai_cmds = command.run(timeout=float(ai_arg_two))
     if logger is not None:
         logger.log_ai_move(json.dumps(ai_cmds))
@@ -237,14 +237,14 @@ def run_game(server, game, use_logger=True):
             final_game_state_dict = e.game_state_dict
             break
         moves_made += 1
-        print 'moves_made:', moves_made, 'score:', game['game']['game_state']['score'],
-        print 'seconds_remaining:', game['competition_seconds_remaining']
+        # print 'moves_made:', moves_made, 'score:', game['game']['game_state']['score'],
+        # print 'seconds_remaining:', game['competition_seconds_remaining']
 
     if logger is not None:
         logger.log_game_state(json.dumps(final_game_state_dict))
 
-    print colorgrn.format("Game over! Your score was: %s" %
-                          (final_game_state_dict['score'],))
+    # print colorgrn.format("Game over! Your score was: %s" %
+    #                       (final_game_state_dict['score'],))
     print "RESULTS: %s" % final_game_state_dict['score']
     print "RESULTS_TIME: %s" % moves_made
 

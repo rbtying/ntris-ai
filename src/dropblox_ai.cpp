@@ -181,20 +181,89 @@ bool Board::check(const Block& query) const {
   return true;
 }
 
+std::pair<int, int> Board::countedges(const Block& query) const {
+    bool bmp[rows][cols];
+    memset(bmp, false, sizeof(bool) * rows * cols);
+    int edges_touching_block = 0;
+    int edges_touching_wall = 0;
+    std::pair<int, int> result;
+    result.first = -1;
+    result.second = -1;
+
+    // set the points of the block in bmp
+    for (int idx = 0; idx < block->size; idx++) {
+        Point point;
+        point.i = block->center.i + block->translation.i;
+        point.j = block->center.j + block->translation.j;
+
+        if (block->rotation % 2) {
+            point.i += (2 - block->rotation) * block->offsets[idx].j;
+            point.j += -(2 - block->rotation) * block->offsets[idx].i;
+        } else {
+            point.i += (1 - block->rotation) * block->offsets[idx].i;
+            point.j += (1 - block->rotation) * block->offsets[idx].j;
+        }
+
+        if (point.i < 0 || point.i >= ROWS ||
+            point.j < 0 || point.j >= COLS || bitmap[point.i][point.j]) {
+            return result;
+        }
+
+        bmp[point.i][point.j] = true;
+    }
+
+    // check for edges
+    for (int idx = 0; idx < block->size; idx++) {
+        Point point;
+        point.i = block->center.i + block->translation.i;
+        point.j = block->center.j + block->translation.j;
+
+        if (block->rotation % 2) {
+            point.i += (2 - block->rotation) * block->offsets[idx].j;
+            point.j += -(2 - block->rotation) * block->offsets[idx].i;
+        } else {
+            point.i += (1 - block->rotation) * block->offsets[idx].i;
+            point.j += (1 - block->rotation) * block->offsets[idx].j;
+        }
+
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                int r = point.i + dy;
+                int c = point.j + dx;
+                if (r < 0 || c < 0 || r >= rows || c >= cols) {
+                    // this is a wall edge
+                    edges_touching_wall++;
+                } else if (bmp[r][c]) {
+                    // this is in the block, so it's not an edge.
+                    continue;
+                } else if (bitmap[r][c]) {
+                    // this is set on the board, so this is an edge touching
+                    // another block.
+                    edges_touching_block++;
+                }
+            }
+        }
+
+    }
+    result.first = edges_touching_block;
+    result.second = edges_touching_wall;
+    return result;
+}
+
 // Resets the block's position, moves it according to the given commands, then
 // drops it onto the board. Returns a pointer to the new board state object.
 //
 // Throws an exception if the block is ever in an invalid position.
-Board* Board::do_commands(const vector<string>& commands) {
+Board* Board::do_commands(const vector<move_t>& commands) {
   block->reset_position();
   if (!check(*block)) {
     throw Exception("Block started in an invalid position");
   }
   for (int i = 0; i < commands.size(); i++) {
-    if (commands[i] == "drop") {
+    if (commands[i] == DROP) {
       return place();
     } else {
-      block->do_command(commands[i]);
+      block->do_command(StringifyMove(commands[i]));
       if (!check(*block)) {
         throw Exception("Block reached in an invalid position");
       }
@@ -240,7 +309,7 @@ Board* Board::place() {
     }
     new_board->bitmap[point.i][point.j] = 1;
   }
-  Board::remove_rows(&(new_board->bitmap));
+  new_board->rows_cleared = rows_cleared + Board::remove_rows(&(new_board->bitmap));
 
   new_board->block = preview[0];
   for (int i = 1; i < preview.size(); i++) {
@@ -252,7 +321,7 @@ Board* Board::place() {
 
 // A static method that takes in a new_bitmap and removes any full rows from it.
 // Mutates the new_bitmap in place.
-void Board::remove_rows(Bitmap* new_bitmap) {
+int Board::remove_rows(Bitmap* new_bitmap) {
   int rows_removed = 0;
   for (int i = ROWS - 1; i >= 0; i--) {
     bool full = true;
@@ -275,6 +344,7 @@ void Board::remove_rows(Bitmap* new_bitmap) {
       (*new_bitmap)[i][j] = 0;
     }
   }
+  return rows_removed;
 }
 
 int main(int argc, char** argv) {
@@ -287,14 +357,18 @@ int main(int argc, char** argv) {
   Board board(state);
 
   // Make some moves!
-  vector<string> moves;
-  while (board.check(*board.block)) {
-    board.block->left();
-    moves.push_back("left");
-  }
-  // Ignore the last move, because it moved the block into invalid
-  // position. Make all the rest.
-  for (int i = 0; i < moves.size() - 1; i++) {
-    cout << moves[i] << endl;
+  // vector<string> moves;
+  // while (board.check(*board.block)) {
+  //   board.block->left();
+  //   moves.push_back("left");
+  // }
+  // // Ignore the last move, because it moved the block into invalid
+  // // position. Make all the rest.
+  // for (int i = 0; i < moves.size() - 1; i++) {
+  //   cout << moves[i] << endl;
+  // }
+  std::vector<move_t> bestmove = FindBestMove(&board, argv[3]);
+  for (int i = 0; i < bestmove.size(); i++) {
+      cout << StringifyMove(bestmove[i]) << endl;
   }
 }

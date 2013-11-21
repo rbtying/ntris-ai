@@ -1,8 +1,12 @@
 #include "json/reader.h"
 #include "json/elements.h"
+#include "choose_move.h"
 
 #include <sstream>
 #include <vector>
+#include <utility>
+#include <algorithm>
+#include <cstring>
 
 using namespace json;
 using namespace std;
@@ -68,6 +72,7 @@ class Board {
  public:
   int rows;
   int cols;
+  int rows_cleared = 0;
   Bitmap bitmap;
   Block* block;
   vector<Block*> preview;
@@ -78,13 +83,17 @@ class Board {
   // its squares are in bounds and are currently unoccupied.
   bool check(const Block& query) const;
 
+  // returns a pair <block_edges, wall_edges> of the number of edges in contact
+  // with either a wall or a block.
+  std::pair<int, int> countedges(const Block& query) const;
+
   // Resets the block's position, moves it according to the given commands, then
   // drops it onto the board. Returns a pointer to the new board state object.
   //
   // Throws an exception if the block is ever in an invalid position.
   //
   // A command is one of "left", "right", "up", "down", "rotate".
-  Board* do_commands(const vector<string>& commands);
+  Board* do_commands(const vector<move_t>& commands);
 
   // Drops the block from whatever position it is currently at. Returns a
   // pointer to the new board state object, with the next block drawn from the
@@ -99,7 +108,7 @@ class Board {
 
   // A static method that takes in a new_bitmap and removes any full rows from it.
   // Mutates the new_bitmap in place.
-  static void remove_rows(Bitmap* new_bitmap);
+  static int remove_rows(Bitmap* new_bitmap);
  
  private:
   Board();
