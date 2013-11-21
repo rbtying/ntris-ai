@@ -258,14 +258,13 @@ double ScoreVector::Score(Board* board) {
 
     int heights[board->cols];
     int holes = 0;
-    int edges_touching_block = 0;
-    int edges_touching_wall = 0;
     int external_edges = 0;
     int gaps = 0;
     int points = 0;
     int block_height = 0;
     int covers = 0;
     int bumpiness = 0;
+    int landing_height = 0;
 
     Block *block = board->block;
 
@@ -274,6 +273,9 @@ double ScoreVector::Score(Board* board) {
     if (edges.first < 0 && edges.second < 0) {
         return -10e6;
     }
+
+    std::pair<int, int> dim = block->dimensions();
+    landing_height = block->center.j + dim.second / 2;
    
     // initialize heights
     for (int j = 0; j < board->cols; j++) {
@@ -334,19 +336,55 @@ double ScoreVector::Score(Board* board) {
         prev_height = heights[j];
     }
 
+    int row_transitions = 0;
+    int col_transitions = 0;
+    int well_sums = 0;
+
+    for (int i = 0; i < board->rows; i++) {
+        for (int j = 0; j < board->cols; j++) {
+            if (j > 0) {
+                if ((!board->bitmap[i][j]) != (!board->bitmap[i][j-1])) {
+                    // column transition
+                    col_transitions++;
+                }
+            }
+
+            if (i > 0) {
+                if ((!board->bitmap[i][j]) != (!board->bitmap[i-1][j])) {
+                    row_transitions++;
+                }
+            }
+
+            bool leftcol = (j == 0) || board->bitmap[i][j-1];
+            bool rightcol = (j == board->cols - 1) || board->bitmap[i][j+1];
+            if (!board->bitmap[i][j] && leftcol && rightcol) {
+                // this is a well, ie
+                // X_X
+                // X_X
+                well_sums++;
+            }
+        }
+    }
+
     double score = 0.0;
 
     values["BLOCK_EDGES"] = max(edges.first, 0);
     values["WALL_EDGES"] = max(edges.second, 0);
     values["EXTERNAL_EDGES"] = max(edges.first + edges.second, 0);
     values["GAPS"] = gaps;
-    values["HOLES"] = holes;
     values["MAX_HEIGHT"] = max_height;
     values["BLOCK_HEIGHT"] = block_height;
     points = (1 << board->rows_cleared) - 1;
     values["POINTS_EARNED"] = points;
     values["COVERS"] = covers;
     values["BUMPINESS"] = bumpiness;
+
+    values["ROW_TRANSITIONS"] = row_transitions;
+    values["COL_TRANSITIONS"] = col_transitions;
+    values["ROWS_CLEARED"] = board->rows_cleared;
+    values["LANDING_HEIGHT"] = landing_height;
+    values["WELL_SUMS"] = well_sums;
+    values["HOLES"] = holes;
 
     for (std::map<std::string, double>::iterator iter = values.begin(); iter != values.end(); ++iter) {
         std::string key = iter->first;

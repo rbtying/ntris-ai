@@ -61,6 +61,8 @@ class Block {
   void do_command(const string& command);
   void do_commands(const vector<string>& commands);
 
+  std::pair<int, int> dimensions();
+
   void reset_position();
 
  private:

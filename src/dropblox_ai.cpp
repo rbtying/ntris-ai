@@ -116,6 +116,50 @@ void Block::do_command(const string& command) {
   }
 }
 
+/*!
+ * Gets the width, height of this block
+ *
+ * @return pair of width, height.
+ */
+std::pair<int, int> Block::dimensions() {
+  Point point;
+  std::pair<int, int> dim;
+
+  int left_bound = COLS;
+  int right_bound = 0;
+  int bottom_bound = ROWS;
+  int top_bound = 0;
+  
+  for (int i = 0; i < size; i++) {
+    point.i = center.i + translation.i;
+    point.j = center.j + translation.j;
+    if (rotation % 2) {
+      point.i += (2 - rotation)*offsets[i].j;
+      point.j +=  -(2 - rotation)*offsets[i].i;
+    } else {
+      point.i += (1 - rotation)*offsets[i].i;
+      point.j += (1 - rotation)*offsets[i].j;
+    }
+    if (point.j < left_bound) {
+        left_bound = point.j;
+    }
+    if (point.j > right_bound) {
+        right_bound = point.j;
+    }
+
+    if (point.i < bottom_bound) {
+        bottom_bound = point.i;
+    }
+    if (point.i > top_bound) {
+        top_bound = point.i;
+    }
+  }
+
+  dim.first = right_bound - left_bound;
+  dim.second = top_bound - bottom_bound;
+  return dim;
+}
+
 void Block::do_commands(const vector<string>& commands) {
   for (int i = 0; i < commands.size(); i++) {
     do_command(commands[i]);

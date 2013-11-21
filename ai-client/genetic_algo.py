@@ -7,16 +7,24 @@ import threading
 import sys
 
 chromosome_seed = {
-        'BLOCK_EDGES': 0.7277,
-        'WALL_EDGES': 1.42234,
+        # 'BLOCK_EDGES': 0.7277,
+        # 'WALL_EDGES': 1.42234,
         # 'EXTERNAL_EDGES': 0.4,
-        'GAPS': 0.182809,
-        'HOLES': -1.6656,
-        'MAX_HEIGHT': -0.1,
-        'BLOCK_HEIGHT': -0.7377,
-        'POINTS_EARNED': 0.9297,
-        'COVERS': 0.05707,
-        'BUMPINESS': -0.4219
+        # 'GAPS': 0.182809,
+        # 'MAX_HEIGHT': -0.1,
+        # 'BLOCK_HEIGHT': -0.7377,
+        # 'POINTS_EARNED': 0.9297,
+        # 'COVERS': 0.05707,
+        # 'BUMPINESS': -0.4219
+        # 'HOLES': -1.6656,
+
+        'LANDING_HEIGHT': -0.4500,
+        'ROWS_CLEARED': 0.3418,
+        'ROW_TRANSITIONS': -0.3218,
+        'COL_TRANSITIONS': -0.9387,
+        'HOLES': -0.7899,
+        'WELL_SUMS': -0.3386,
+
     }
 
 def generate_random_chromosome(seed=chromosome_seed, sd=1):
