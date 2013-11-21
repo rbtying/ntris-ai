@@ -1,0 +1,8 @@
+ai-client/dropblox_ai
+ai-client/history
+ai-client/*.log
+env/
+
+.*.swp
+~*
+*.pyc
