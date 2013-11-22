@@ -1,6 +1,8 @@
 #include <string>
 #include <vector>
+#include <queue>
 #include <map>
+#include <set>
 #include <iostream>
 #include <algorithm>
 #include <utility>
@@ -79,10 +81,40 @@ std::string StringifyMove(const move_t& m) {
             return "down";
         case ROTATE:
             return "rotate";
+        case NO_MOVE:
+            return "no_move";
     }
     return "INVALID";
 }
 
+pose_t apply_move(const pose_t& initial, const move_t& m) {
+    pose_t end;
+    end.i = initial.i;
+    end.j = initial.j;
+    end.rot = initial.rot;
+
+    switch(m) {
+        case LEFT:
+            end.j -= 1;
+            break;
+        case RIGHT:
+            end.j += 1;
+            break;
+        case UP:
+            end.i -= 1;
+            break;
+        case DOWN:
+            end.i += 1;
+            break;
+        case ROTATE:
+            end.rot = (end.rot + 1) % 4;
+            break;
+        case NO_MOVE:
+        default:
+            break;
+    }
+    return end;
+}
 
 /*!
  * Generates the valid moves in this board
@@ -92,7 +124,7 @@ std::string StringifyMove(const move_t& m) {
  * @return a list of lists of possible moves
  */
 std::vector<std::vector<move_t> > GenerateValidMoves(Board* board) {
-    std::vector<std::vector<move_t> > permutations(48);
+    std::vector<std::vector<move_t> > permutations;
 
     // use naive drop approach for now
     // go from rotate, then go from left to right
@@ -100,81 +132,87 @@ std::vector<std::vector<move_t> > GenerateValidMoves(Board* board) {
 
     Board b(*board);
 
-    for (int rot = 0; rot < 4; rot++) {
-        for (int j = 0; j < board->cols; j++) {
-            vector<move_t> moves;
-            block->reset_position();
-            move_t dx_move;
-            int dx = 0;
+    // this cache holds a mapping from
+    // current_pose -> previous_pose, move
+    // such that current_pose = apply_move(previous_pose, move)
+    //
+    // we can thus walk up current_pose->previous_pose to the initial pose,
+    // and generate the move list by pushing the move to the front of the list.
+    std::map<pose_t, std::pair<pose_t, move_t> > path_cache;
 
-            if (block->center.j > j) {
-                dx_move = LEFT;
-                dx = block->center.j - j;
+    // try left, right, down, rotate on each step
+    move_t possible_moves[] = { ROTATE, LEFT, RIGHT, DOWN };
+    int num_moves = 4;
+
+    pose_t initial;
+    initial.i = block->center.i;
+    initial.j = block->center.j;
+    initial.rot = block->rotation;
+
+    std::queue<pose_t> toprocess;
+    toprocess.push(initial);
+
+    std::set<pose_t> end_positions;
+
+    while (!toprocess.empty()) {
+        pose_t p = toprocess.front();
+        toprocess.pop();
+
+        // set up next node
+        for (int moveidx = 0; moveidx < num_moves; moveidx++) {
+            move_t move = possible_moves[moveidx];
+            pose_t next = apply_move(p, move);
+            if (board->check(*block, next)) {
+                // this is a valid position
+                // memoize the paths. 
+                if (!path_cache.count(next)) {
+                    std::pair<pose_t, move_t> transition;
+                    transition.first = p;
+                    transition.second = move;
+                    path_cache[next] = transition;
+
+                    toprocess.push(next);
+                }
             } else {
-                dx_move = RIGHT;
-                dx = j - block->center.j;
-            }
-
-            for (int x = 0; x < dx; x++) {
-                bool moved = false;
-
-                // attempt rotation if not already there
-                int dr = rot - (block->rotation % 4);
-                for (int r = 0; r < dr; r++) {
-                    if (block->checked_rotate(b)) {
-                        moves.push_back(ROTATE);
-                        moved = true;
-                    }
+                if (move == DOWN && !end_positions.count(p)) {
+                    // this block can't be moved down any further, so it must be
+                    // a block of interest, i.e. a potential end state
+                    end_positions.insert(p);
                 }
-
-                if (dx_move == LEFT) {
-                    if (block->checked_left(b)) {
-                        moves.push_back(LEFT);
-                        moved = true;
-                    }
-                } else if (dx_move == RIGHT) {
-                    if (block->checked_right(b)) {
-                        moves.push_back(RIGHT);
-                        moved = true;
-                    }
-                }
-
-                if (!moved) {
-                    // try going down?
-                    if (block->checked_down(b)) {
-                        moves.push_back(DOWN);
-                    }
-                }
-            }
-
-            // if (block->center.j > j) {
-            //     int dx = block->center.j - j;
-            //     for (int left = 0; left < dx; left++) {
-            //         block->left();
-            //         if (board->check(*block)) {
-            //             moves.push_back(LEFT);
-            //         } else {
-            //             block->right();
-            //         }
-            //     }
-            // } else if (block->center.j < j) {
-            //     int dx = j - block->center.j;
-            //     for (int right = 0; right < dx; right++) {
-            //         block->right();
-            //         if (board->check(*block)) {
-            //             moves.push_back(RIGHT);
-            //         } else {
-            //             block->left();
-            //         }
-            //     }
-            // }
-
-            if (board->check(*block)) {
-                permutations.push_back(moves);
             }
         }
     }
-    block->reset_position();
+    for (std::set<pose_t>::iterator it = end_positions.begin(); it != end_positions.end(); ++it) {
+        std::vector<move_t> moves;
+
+        pose_t ptr = *it;
+        bool successful = true;
+        while (ptr != initial) {
+            if (path_cache.count(ptr)) {
+                std::pair<pose_t, move_t> transition = path_cache[ptr];
+                pose_t parent = transition.first;
+                move_t m = transition.second;
+                moves.push_back(m);
+                ptr = parent;
+            } else {
+                successful = false;
+                break;
+            }
+        }
+        if (successful) {
+            std::reverse(moves.begin(), moves.end());
+            // get rid of trailing DOWN
+            while (moves.back() == DOWN) {
+                moves.pop_back();
+            }
+
+            permutations.push_back(moves);
+        } else {
+            std::cerr << "Could not find path" << std::endl;
+        }
+    }
+
+    std::cerr << "Permutations: " << permutations.size() << std::endl << std::flush;
 
     return permutations;
 }
@@ -203,29 +241,46 @@ std::vector<move_t> FindBestMove(Board* board, std::string config) {
 #pragma omp parallel for
     for (int i1 = 0; i1 < permutations.size(); i1++) {
         scores[i1] = -10e6;
-        Board * ptr1 = board->do_commands(permutations[i1]);
-        if (ptr1->check(*ptr1->block)) {
-#define DO_LOOKAHEAD
+
+        Board * ptr1;
+        int landing_height;
+        try {
+            ptr1 = board->do_commands(permutations[i1]);
+
+            std::pair<int, int> dim = board->block->dimensions();
+            landing_height = board->block->center.j + dim.second / 2;
+
+            double score = sv.Score(ptr1, landing_height);
+            if (score > scores[i1]) {
+                scores[i1] = score;
+            }
+
+        } catch (Exception& e) {
+            // std::cerr << "Could not complete commands: " << std::endl;
+            // for (int i = 0; i < permutations[i].size(); i++) {
+            //     std::cerr << StringifyMove(permutations[i1][i]) << ", ";
+            // }
+            // std::cerr << std::endl;
+            continue;
+        }
+/* #define DO_LOOKAHEAD */
 #ifdef DO_LOOKAHEAD
-            try {
-                std::vector<vector<move_t> > perm2 = GenerateValidMoves(board->do_commands(permutations[i1]));
+        if (ptr1->check(*ptr1->block)) {
+            scores[i1] = -1; // reset
+                std::vector<vector<move_t> > perm2 = GenerateValidMoves(ptr1);
                 for (int i2 = 0; i2 < perm2.size(); i2++) {
-                    Board * ptr2 = ptr1->do_commands(perm2[i2]);
-                    double score = sv.Score(ptr2);
-                    if (score > scores[i1]) {
-                        scores[i1] = score;
+                    try {
+                        Board * ptr2 = ptr1->do_commands(perm2[i2]);
+                        double score = sv.Score(ptr2, landing_height);
+                        if (score > scores[i1]) {
+                            scores[i1] = score;
+                        }
+                    } catch (Exception& e) {
+                        continue;
                     }
                 }
-            } catch (Exception& e) {
-#endif
-                double score = sv.Score(ptr1);
-                if (score > scores[i1]) {
-                    scores[i1] = score;
-                }
-#ifdef DO_LOOKAHEAD
-            }
-#endif
         }
+#endif
     }
 
     int best_idx = 0;
@@ -250,8 +305,9 @@ std::vector<move_t> FindBestMove(Board* board, std::string config) {
  *
  * @param board the starting board
  * @param moves the moves to make
+ * @param landing_height, set to <0 to recalculate.
  */
-double ScoreVector::Score(Board* board) {
+double ScoreVector::Score(Board* board, int landing_height) {
     std::map<std::string, double> values;
 
     int max_height = 0;
@@ -264,7 +320,7 @@ double ScoreVector::Score(Board* board) {
     int block_height = 0;
     int covers = 0;
     int bumpiness = 0;
-    int landing_height = 0;
+    bool find_landing_height = landing_height < 0;
 
     Block *block = board->block;
 
@@ -274,8 +330,10 @@ double ScoreVector::Score(Board* board) {
         return -10e6;
     }
 
-    std::pair<int, int> dim = block->dimensions();
-    landing_height = block->center.j + dim.second / 2;
+    if (find_landing_height) {
+        std::pair<int, int> dim = block->dimensions();
+        landing_height = block->center.j + dim.second / 2;
+    }
    
     // initialize heights
     for (int j = 0; j < board->cols; j++) {
@@ -340,8 +398,10 @@ double ScoreVector::Score(Board* board) {
     int col_transitions = 0;
     int well_sums = 0;
 
-    for (int i = 0; i < board->rows; i++) {
-        for (int j = 0; j < board->cols; j++) {
+    for (int j = 0; j < board->cols; j++) {
+        bool has_a_roof = false;
+        bool found_well = false;
+        for (int i = 0; i < board->rows; i++) {
             if (j > 0) {
                 if ((!board->bitmap[i][j]) != (!board->bitmap[i][j-1])) {
                     // column transition
@@ -355,13 +415,26 @@ double ScoreVector::Score(Board* board) {
                 }
             }
 
-            bool leftcol = (j == 0) || board->bitmap[i][j-1];
-            bool rightcol = (j == board->cols - 1) || board->bitmap[i][j+1];
-            if (!board->bitmap[i][j] && leftcol && rightcol) {
-                // this is a well, ie
-                // X_X
-                // X_X
-                well_sums++;
+            if (board->bitmap[i][j]) {
+                has_a_roof = true;
+            }
+
+            if (!has_a_roof) {
+                bool leftcol = (j == 0) || board->bitmap[i][j-1];
+                bool rightcol = (j == board->cols - 1) || board->bitmap[i][j+1];
+                if (!board->bitmap[i][j] && leftcol && rightcol) {
+                    if (!found_well) {
+                        found_well = true;
+                        // this is a well, ie
+                        // X_X
+                        // X_X
+                        for (int row = i; row < board->rows; row++) {
+                            if (!board->bitmap[row][j]) {
+                                well_sums++;
+                            }
+                        }
+                    }
+                }
             }
         }
     }

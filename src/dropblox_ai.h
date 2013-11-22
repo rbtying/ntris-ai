@@ -58,6 +58,7 @@ class Block {
 
   // Performs a command or a list of commands to move a block. A command is one of
   // "left", "right", "up", "down", "rotate".
+  bool checked_move(const Board& board, const move_t& move);
   void do_command(const string& command);
   void do_commands(const vector<string>& commands);
 
@@ -84,6 +85,14 @@ class Board {
   // Returns true if the `query` block is in valid position - that is, if all of
   // its squares are in bounds and are currently unoccupied.
   bool check(const Block& query) const;
+
+  /*!
+   * Checks a given block at a given pose
+   * @param query the block to check
+   * @param pose the pose it is in
+   * @return true if pose is a valid position for query.
+   */
+  bool check(const Block& query, const pose_t& pose);
 
   // returns a pair <block_edges, wall_edges> of the number of edges in contact
   // with either a wall or a block.

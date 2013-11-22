@@ -100,6 +100,29 @@ bool Block::checked_rotate(const Board& board) {
   return false;
 }
 
+/*!
+ * Attempts a move and returns true on success, false on failure.
+ *
+ * @param board the board to check against
+ * @param move the move to try
+ * @return true on move success
+ */
+bool Block::checked_move(const Board& board, const move_t& move) {
+  switch(move) {
+    case LEFT:
+      return checked_left(board);
+    case RIGHT:
+      return checked_right(board);
+    case DOWN:
+      return checked_down(board);
+    case ROTATE:
+      return checked_rotate(board);
+    case UP:
+      return checked_up(board);
+  }
+  return false;
+}
+
 void Block::do_command(const string& command) {
   if (command == "left") {
     left();
@@ -217,6 +240,26 @@ bool Board::check(const Block& query) const {
     } else {
       point.i += (1 - query.rotation)*query.offsets[i].i;
       point.j += (1 - query.rotation)*query.offsets[i].j;
+    }
+    if (point.i < 0 || point.i >= ROWS ||
+        point.j < 0 || point.j >= COLS || bitmap[point.i][point.j]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool Board::check(const Block& query, const pose_t& pose) {
+  Point point;
+  for (int i = 0; i < query.size; i++) {
+    point.i = pose.i;
+    point.j = pose.j;
+    if (query.rotation % 2) {
+      point.i += (2 - pose.rot)*query.offsets[i].j;
+      point.j +=  -(2 - pose.rot)*query.offsets[i].i;
+    } else {
+      point.i += (1 - pose.rot)*query.offsets[i].i;
+      point.j += (1 - pose.rot)*query.offsets[i].j;
     }
     if (point.i < 0 || point.i >= ROWS ||
         point.j < 0 || point.j >= COLS || bitmap[point.i][point.j]) {
