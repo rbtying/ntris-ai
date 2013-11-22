@@ -287,7 +287,7 @@ def main(argv):
         sys.exit(0)
 
     seed = None
-    if len(argv) == 3:
+    if len(argv) > 2:
       seed = int(argv[2])
     entry_mode = argv[1]
     if entry_mode not in ('compete', 'practice', 'local'):
