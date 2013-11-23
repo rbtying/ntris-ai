@@ -23,11 +23,11 @@
  *
  * format.
  */
-void ScoreVector::LoadWeightsFromFile(std::string fname) {
+void ScoreVector::LoadWeightsFromFile(const char * fname) {
     std::ifstream f;
     std::string line;
 
-    f.open(fname.c_str());
+    f.open(fname);
 
     if (f.fail() || !f.is_open()) {
         // apply default weights
@@ -259,7 +259,7 @@ std::vector<std::vector<move_t> > GenerateValidMoves(Board* board) {
  * @param a board to find the best move for
  * @return the best sequence of moves
  */
-std::vector<move_t> FindBestMove(Board* board, std::string config) {
+std::vector<move_t> FindBestMove(Board* board, const char* config) {
     ScoreVector sv;
     sv.LoadWeightsFromFile(config);
 

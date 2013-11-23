@@ -493,7 +493,7 @@ int main(int argc, char** argv) {
   //   cout << moves[i] << endl;
   // }
   //
-  char * fpath = NULL;
+  const char * fpath = "weights.txt";
   if (argc >= 3) {
       fpath = argv[3];
   }

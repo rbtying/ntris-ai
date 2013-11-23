@@ -63,7 +63,7 @@ inline bool operator>=(const pose_t& lhs, const pose_t& rhs) {
  */
 class ScoreVector {
     public:
-        void LoadWeightsFromFile(std::string fname);
+        void LoadWeightsFromFile(const char * fname);
         void WriteWeightsToFile(std::string fname);
 
         double Score(Board* board, int landing_height=-1);
@@ -73,7 +73,7 @@ class ScoreVector {
 };
 
 std::string StringifyMove(const move_t& m);
-std::vector<move_t> FindBestMove(Board* board, std::string config);
+std::vector<move_t> FindBestMove(Board* board, const char * config);
 std::vector<std::vector<move_t> > GenerateValidMoves(Board* board);
 
 static const double MIN_SCORE = -10e6;
