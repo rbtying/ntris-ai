@@ -57,6 +57,7 @@ class Command(object):
         cmds = []
         is_windows = platform.system() == "Windows"
         process = Popen([self.cmd] + self.args, stdout=PIPE, universal_newlines=True, shell=is_windows)
+
         def target():
             for line in iter(process.stdout.readline, ''):
                 line = line.rstrip('\n')

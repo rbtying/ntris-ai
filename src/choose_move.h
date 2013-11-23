@@ -76,4 +76,6 @@ std::string StringifyMove(const move_t& m);
 std::vector<move_t> FindBestMove(Board* board, std::string config);
 std::vector<std::vector<move_t> > GenerateValidMoves(Board* board);
 
+static const double MIN_SCORE = -10e6;
+
 #endif /* CHOOSE_MOVE_H_ */

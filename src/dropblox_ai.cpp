@@ -26,6 +26,41 @@ Block::Block(Object& raw_block) {
   rotation = 0;
 }
 
+inline bool operator==(const Block& lhs, const Block& rhs) {
+    return lhs.center.i == rhs.center.i && lhs.center.j == rhs.center.j && (lhs.rotation % 4) == (rhs.rotation % 4);
+};
+inline bool operator!=(const Block& lhs, const Block& rhs) {
+    return !operator==(lhs,rhs);
+};
+inline bool operator< (const Block& lhs, const Block& rhs) {
+    if (lhs.center.i < rhs.center.i) {
+        return true;
+    } else if (lhs.center.i == rhs.center.i) {
+        if (lhs.center.j < rhs.center.j) {
+            return true;
+        } else if (lhs.center.j == rhs.center.j) {
+            if ((lhs.rotation % 4) < (rhs.rotation % 4)) {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    } else {
+        return false;
+    }
+};
+inline bool operator> (const Block& lhs, const Block& rhs) {
+    return operator< (rhs,lhs);
+};
+inline bool operator<=(const Block& lhs, const Block& rhs) {
+    return !operator> (lhs,rhs);
+};
+inline bool operator>=(const Block& lhs, const Block& rhs) {
+    return !operator< (lhs,rhs);
+}
+
 void Block::left() {
   translation.j -= 1;
 }
@@ -119,6 +154,8 @@ bool Block::checked_move(const Board& board, const move_t& move) {
       return checked_rotate(board);
     case UP:
       return checked_up(board);
+    default:
+      return false;
   }
   return false;
 }
@@ -184,7 +221,7 @@ std::pair<int, int> Block::dimensions() {
 }
 
 void Block::do_commands(const vector<string>& commands) {
-  for (int i = 0; i < commands.size(); i++) {
+  for (unsigned int i = 0; i < commands.size(); i++) {
     do_command(commands[i]);
   }
 }
@@ -347,7 +384,7 @@ Board* Board::do_commands(const vector<move_t>& commands) {
   if (!check(*block)) {
     throw Exception("Block started in an invalid position");
   }
-  for (int i = 0; i < commands.size(); i++) {
+  for (unsigned int i = 0; i < commands.size(); i++) {
     if (commands[i] == DROP) {
       return place();
     } else {
@@ -400,7 +437,7 @@ Board* Board::place() {
   new_board->rows_cleared = rows_cleared + Board::remove_rows(&(new_board->bitmap));
 
   new_board->block = preview[0];
-  for (int i = 1; i < preview.size(); i++) {
+  for (unsigned int i = 1; i < preview.size(); i++) {
     new_board->preview.push_back(preview[i]);
   }
 
@@ -456,7 +493,7 @@ int main(int argc, char** argv) {
   //   cout << moves[i] << endl;
   // }
   std::vector<move_t> bestmove = FindBestMove(&board, argv[3]);
-  for (int i = 0; i < bestmove.size(); i++) {
+  for (unsigned int i = 0; i < bestmove.size(); i++) {
       cout << StringifyMove(bestmove[i]) << endl;
   }
 }
