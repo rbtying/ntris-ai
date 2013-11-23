@@ -228,3 +228,8 @@ available, you may need to determine how to install OpenMP libraries on your
 system. In most cases, these will be installed already.
 
 There are no other dependencies.
+
+This AI conforms to the Dropblox specification; you can run it as you would
+normally run Dropblox. The original unmodified client is available as
+`unmodified_client.py` in `ai-client`, and the Makefile will put the
+`dropbox_ai` executable in the correct location.
