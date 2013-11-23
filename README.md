@@ -11,13 +11,13 @@ STRATEGY OVERVIEW
 The ntris AI implements a fairly basic heuristic for determining the sequence of
 moves to play in the next turn:
 
-1. GenerateValidMoves()
-2. for each moveseq in validmoves
-    1. calculate the score (see SCORING ALGORITHM)
-3. find the average score
-4. for each moveseq in validmoves
-    1. if the score of this moveseq is greater than the average, recursively
-       calculate scores for one level deeper.
+- GenerateValidMoves()
+- for each moveseq in validmoves
+    - calculate the score (see SCORING ALGORITHM)
+- find the average score
+- for each moveseq in validmoves
+    - if the score of this moveseq is greater than the average, recursively
+      calculate scores for one level deeper.
 
 The AI makes decisions based only on 2-piece look-ahead (see TRADEOFFS), so it
 will at most recurse three levels deep. This leads to a search space on the
@@ -31,7 +31,7 @@ The weights for the scoring algorithm were determined experimentally (see
 DETERMINING WEIGHTS)
 
 DESIGN CHOICES
---------------
+==============
 
 SCORING ALGORITHM
 -----------------
@@ -41,31 +41,45 @@ the metrics the most [successful
 projects](http://www.colinfahey.com/tetris/tetris.html) used to evaluate tetris
 game boards. The ones that are calculated by the scoring algorithm are as
 follows:
-    - `BLOCK_EDGES`: The number of edges a given block has in contact with the
-      existing board
-    - `WALL_EDGES`: The number of edges a given block has in contact with the
-      wall
-    - `EXTERNAL_EDGES`: The sum of `BLOCK_EDGES` and `WALL_EDGES`
-    - `GAPS`: The number of transitions from high columns to low columns,
-      weighted by depth.
-    - `MAX_HEIGHT`: The height of the highest part of the highest block in the
-      board.
-    - `BLOCK_HEIGHT`: The sum of the height of each part of each block, weighted
-      by its vertical position.
-    - `POINTS_EARNED`: The number of points earned by the board
-    - `COVERS`: The number of squares which cover holes, weighted by the number
-      of holes covered.
-    - `ROW_TRANSITIONS`: The number of transitions from filled to unfilled
-      squares and vice versa in all rows. A measure of the uniformity of a row
-    - `COL_TRANSITIONS`: The number of transitions from filled to unfilled
-      squares and vice versa in all columns. A measure of the uniformity of a
-      column.
-    - `ROWS_CLEARED`: The number of rows cleared by the board.
-    - `LANDING_HEIGHT`: The height of center the block being placed.
-    - `WELL_SUMS`: The sum of all squares that are in a "well", i.e. are 1
-      column wide with both the left and right columns occupied and higher.
-    - `HOLES`: The number of holes (empty squares with at least one filled
-      square above them) on the board.
+
+- `BLOCK_EDGES`: The number of edges a given block has in contact with the existing
+  board
+
+- `WALL_EDGES`: The number of edges a given block has in contact with the
+  wall
+
+- `EXTERNAL_EDGES`: The sum of `BLOCK_EDGES` and `WALL_EDGES`
+
+- `GAPS`: The number of transitions from high columns to low columns,
+  weighted by depth.
+
+- `MAX_HEIGHT`: The height of the highest part of the highest block in the
+  board.
+
+- `BLOCK_HEIGHT`: The sum of the height of each part of each block, weighted
+  by its vertical position.
+
+- `POINTS_EARNED`: The number of points earned by the board
+
+- `COVERS`: The number of squares which cover holes, weighted by the number
+  of holes covered.
+
+- `ROW_TRANSITIONS`: The number of transitions from filled to unfilled
+  squares and vice versa in all rows. A measure of the uniformity of a row
+  
+- `COL_TRANSITIONS`: The number of transitions from filled to unfilled
+  squares and vice versa in all columns. A measure of the uniformity of a
+  column.
+
+- `ROWS_CLEARED`: The number of rows cleared by the board.
+
+- `LANDING_HEIGHT`: The height of center the block being placed.
+
+- `WELL_SUMS`: The sum of all squares that are in a "well", i.e. are 1
+  column wide with both the left and right columns occupied and higher.
+
+- `HOLES`: The number of holes (empty squares with at least one filled
+  square above them) on the board.
 
 Not all of these metrics are used; in fact, many of them measure the same
 things. Nevertheless, all of them are calculated in each score evaluation, and
@@ -91,9 +105,9 @@ board.
 
 Because of this, I reimplemented this search using a fairly standard BFS. The
 main change was the addition of a path cache, which helped reduce the number of
-redundant calculations performed when searching for a valid path. Though this remains
-more computationally expensive than the naive method, it significantly improves
-results and so is most likely useful.
+redundant calculations performed when searching for a valid path. Though this
+remains more computationally expensive than the naive method, it significantly
+improves results and so is most likely useful.
 
 DETERMINING WEIGHTS
 -------------------
@@ -156,7 +170,7 @@ hand.
 OPTIMIZATION
 ------------
 
-1. Early-stage optimization:
+- Early-stage optimization:
     - Turned on GCC optimization level 3. Though this occasionally introduces
       unexpected bugs and crashes, I felt that my implementation of this AI was
       not sufficiently complex that it would be difficult to correct for. This
@@ -174,13 +188,13 @@ OPTIMIZATION
       strings. This optimization may have been premature, but it made the
       code type-safe and compiler-checked, so it was probably a net benefit.
 
-2. Search space optimization:
+- Search space optimization:
     - At 2-piece lookahead it is very impractical to consider the entire search
       space of move sequences. A simple average-score heuristic is used to
       eliminate half of the possibility trees at each level of recursion, which
       makes the runtime fairly reasonable.
 
-3. OpenMP
+- OpenMP
     - Initially tried to get low-hanging fruit by enabling OpenMP. Never having
       used OpenMP before, I forgot to set the `-fopenmp` flag during
       compilation, and so saw no distinct performance improvement.
@@ -195,12 +209,12 @@ OPTIMIZATION
       implements an internal thread pool / worker model, which is proven and
       well-tested, and scales well to the number of available cores.
 
-4. Debug flags
+- Debug flags
     - Compiled without `-g` flag allow further optimization and to keep the
       debug hooks from slowing down computation. This has a noticeable effect,
       going from ~400ms/move to ~1000ms/move.
 
-5. Genetic Algorithm
+- Genetic Algorithm
     - Parallelized trial computations
     - Used single-lookahead as proxy for double-lookahead to reduce
       computational time
