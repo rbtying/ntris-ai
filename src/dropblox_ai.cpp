@@ -492,7 +492,12 @@ int main(int argc, char** argv) {
   // for (int i = 0; i < moves.size() - 1; i++) {
   //   cout << moves[i] << endl;
   // }
-  std::vector<move_t> bestmove = FindBestMove(&board, argv[3]);
+  //
+  char * fpath = NULL;
+  if (argc >= 3) {
+      fpath = argv[3];
+  }
+  std::vector<move_t> bestmove = FindBestMove(&board, fpath);
   for (unsigned int i = 0; i < bestmove.size(); i++) {
       cout << StringifyMove(bestmove[i]) << endl;
   }

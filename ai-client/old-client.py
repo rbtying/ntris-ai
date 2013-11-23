@@ -215,7 +215,11 @@ def run_ai(game_state_dict, seconds_remaining, logger=None):
     ai_arg_two = json.dumps(seconds_remaining)
     if logger is not None:
         logger.log_game_state(ai_arg_one)
-    command = Command(AI_PROCESS_PATH, ai_arg_one, ai_arg_two, sys.argv[3])
+    if len(sys.argv) > 3:
+        weight_file = sys.argv[3]
+    else:
+        weight_file = ''
+    command = Command(AI_PROCESS_PATH, ai_arg_one, ai_arg_two, weight_file)
     ai_cmds = command.run(timeout=float(ai_arg_two))
     if logger is not None:
         logger.log_ai_move(json.dumps(ai_cmds))

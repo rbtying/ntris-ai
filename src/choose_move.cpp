@@ -29,13 +29,24 @@ void ScoreVector::LoadWeightsFromFile(std::string fname) {
 
     f.open(fname.c_str());
 
-    while (std::getline(f, line)) {
-        std::stringstream parse(line);
-        double value;
-        std::string key;
-        parse >> key >> value;
+    if (f.fail() || !f.is_open()) {
+        // apply default weights
+        weights["POINTS_EARNED"] = 0.378565931393;
+        weights["ROW_TRANSITIONS"] = -0.548886169599;
+        weights["LANDING_HEIGHT"] =  0.71240334146;
+        weights["HOLES"] = -1.99902287016;
+        weights["BLOCK_HEIGHT"] = -0.00978251322273;
+        weights["WELL_SUMS"] = -0.151923526632;
+        weights["COL_TRANSITIONS"] = -0.793256698244;
+    } else {
+        while (std::getline(f, line)) {
+            std::stringstream parse(line);
+            double value;
+            std::string key;
+            parse >> key >> value;
 
-        weights[key] = value;
+            weights[key] = value;
+        }
     }
 
     f.close();
